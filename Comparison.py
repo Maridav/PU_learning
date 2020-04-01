@@ -5,7 +5,7 @@ Created on Tue Mar 31 20:05:37 2020
 
 @author: maria
 
-Positive-Unlabeled Learning Using a Traditional Classifier from Nontraditional Input
+Comparison
 """
 
 import numpy as np
@@ -13,8 +13,13 @@ import matplotlib.pyplot as plt
 from sklearn import  linear_model
 from scipy import stats
 
+
+"""
+
+Positive-Unlabeled Learning Using a Traditional Classifier from Nontraditional Input
+
+"""
    
-    
 def new_predict_proba(samples, estimator):
     """
     Arg: 
@@ -71,7 +76,7 @@ def labeled(points):
 def unlabeled(points):
     return [p[0] for p in points if p[1] == 0]
 
-def draw_picture(points, estimator):
+def draw_picture_t(points, estimator):
     """
     Arg: 
      points -- 2-D array of points and their labels
@@ -101,8 +106,9 @@ def draw_picture(points, estimator):
     pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
     pred_lin = new_predict_proba(pos_lin, estimator)[:,1]
     pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
-    plt.contour(x, y, pred, levels=[0.5])
-    
+    u = plt.contour(x, y, pred, levels=[0.5])
+    plt.clabel(u, [0.5], inline=True, fmt = 'trad', fontsize=10)
+
 
   
 #Create sample set of labeled and unlabeled points 
@@ -118,7 +124,75 @@ traditional_classifier.fit(data, labels)
 t = traditional_classifier.predict_proba(labeled(points))
 estimator = sum([t[i][1] for i in range(len(labeled(points)))]) / len(labeled(points))
 
-draw_picture(points, estimator)
+draw_picture_t(points, estimator)
+
+
+
+"""
+
+Positive-Unlabeled Learning Using Weighted Unlabeled Examples
+
+"""
+
+
+def draw_picture_w(points):
+    """
+    Arg: 
+     points -- 2-D array of points and their labels
+     
+    Draws picture of data and separating hyperplane
+    """
+
+    
+    unlab_x, unlab_y = [p[0] for p in unlabeled(points)], [p[1] for p in unlabeled(points)]
+    lab_x, lab_y = [p[0] for p in labeled(points)], [p[1] for p in labeled(points)]
+    
+    min_x, max_x = min(unlab_x + lab_x), max(unlab_x + lab_x)
+    min_y, max_y = min(unlab_y + lab_y), max(unlab_y + lab_y)
+    
+    
+    #Draw separating line
+    x, y = np.mgrid[min_x : max_x :.01, min_y : max_y :.01]
+    pos = np.empty(x.shape + (2,))
+    pos[:, :, 0] = x
+    pos[:, :, 1] = y
+    pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
+    pred_lin = new_classifier.predict_proba(pos_lin)[:,1]
+    pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
+    w = plt.contour(x, y, pred, levels=[0.5])
+    plt.clabel(w, [0.5], inline=True, fmt = 'weigh', fontsize=10)
+
+  
+#Create weighted data
+new_data = []
+new_labels = []
+weights = []
+probabilities = traditional_classifier.predict_proba(data)
+for i in range(len(points)):
+    if points[i][1] == 1:
+        new_data.append(points[i][0])
+        new_labels.append(points[i][1])
+        weights.append(1)
+    else:
+        prob_labeled = probabilities[i][1]
+        weight = ((1 - estimator) * prob_labeled)/ (estimator * (1 - prob_labeled))
+        new_data.append(points[i][0])
+        new_labels.append(1)
+        weights.append(weight)
+        
+        new_data.append(points[i][0])
+        new_labels.append(0)
+        weights.append(1 - weight)
+ 
+#Train on new data       
+new_classifier = linear_model.LogisticRegression()
+new_classifier.fit(new_data, new_labels, weights)
+
+
+draw_picture_w(points)
+
+
+
 
 
 

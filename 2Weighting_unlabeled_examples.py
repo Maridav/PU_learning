@@ -5,7 +5,7 @@ Created on Tue Mar 31 20:05:37 2020
 
 @author: maria
 
-Positive-Unlabeled Learning Using a Traditional Classifier from Nontraditional Input
+Positive-Unlabeled Learning Using Weighted Unlabeled Examples
 """
 
 import numpy as np
@@ -13,48 +13,22 @@ import matplotlib.pyplot as plt
 from sklearn import  linear_model
 from scipy import stats
 
-   
-    
-def new_predict_proba(samples, estimator):
-    """
-    Arg: 
-     samples -- 1-D array of samples
-     
-    Returns: 
-     2-D array of probabilities of belonging to 2 classes in PU-model
-    """
-    t = traditional_classifier.predict_proba(samples)
-    return np.array([(1 - t[i][1] / estimator, t[i][1] / estimator) for 
-                     i in range(len(samples)) ])
-    
-    
-def new_predict(samples, estimator):
-    """
-    Arg: 
-     samples -- 1-D array of  samples
-     
-    Returns: 
-     1-D array -- number of predicted group in PU-model
-    """
-    pr = new_predict_proba(samples, estimator)
-    return np.array([0 if pr[i][0] > 0.5 else 1 for i in range(len(samples))])
-    
 
 
 def sample_point(centers, cov):
     i = np.random.randint(len(centers))
     return np.random.multivariate_normal(centers[i], cov)
 
-def create_set_gauss(var = 0.1, num_of_centers = 20, prob_of_labeled = 0.3):
+def create_set_gauss(var = 0.2, num_of_centers = 20, prob_of_labeled = 0.3):
     """
     Returns 2-D array of points and their labels. Points are sampled from 
     'num_of_centers' gaussians with covariance matrix 'var' * np.identity(1)
     prob_of labeled -- int, probability that point is labeled provided that 
     it is positive
     """
-    mean0 = np.random.multivariate_normal([-1, -1], 0.5 * np.identity(2), 
+    mean0 = np.random.multivariate_normal([-1, -1], 0.1 * np.identity(2), 
                                           size = num_of_centers // 2)
-    mean1 = np.random.multivariate_normal([1, 1], 0.5 * np.identity(2), 
+    mean1 = np.random.multivariate_normal([1, 1], 0.1 * np.identity(2), 
                                           size = num_of_centers // 2)
 
     sample_points0 = np.array([sample_point(mean0, var * np.identity(2)) for _ in range(100)])
@@ -71,7 +45,7 @@ def labeled(points):
 def unlabeled(points):
     return [p[0] for p in points if p[1] == 0]
 
-def draw_picture(points, estimator):
+def draw_picture(points):
     """
     Arg: 
      points -- 2-D array of points and their labels
@@ -99,14 +73,15 @@ def draw_picture(points, estimator):
     pos[:, :, 0] = x
     pos[:, :, 1] = y
     pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
-    pred_lin = new_predict_proba(pos_lin, estimator)[:,1]
+    pred_lin = new_classifier.predict_proba(pos_lin)[:,1]
     pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
     plt.contour(x, y, pred, levels=[0.5])
     
 
   
 #Create sample set of labeled and unlabeled points 
-points = create_set_gauss()
+points = create_set_gauss()        
+        
 data = [points[i][0] for i in range(len(points))]
 labels =[points[i][1] for i in range(len(points))]
 
@@ -118,7 +93,36 @@ traditional_classifier.fit(data, labels)
 t = traditional_classifier.predict_proba(labeled(points))
 estimator = sum([t[i][1] for i in range(len(labeled(points)))]) / len(labeled(points))
 
-draw_picture(points, estimator)
+#Create weighted data
+new_data = []
+new_labels = []
+weights = []
+probabilities = traditional_classifier.predict_proba(data)
+for i in range(len(points)):
+    if points[i][1] == 1:
+        new_data.append(points[i][0])
+        new_labels.append(points[i][1])
+        weights.append(1)
+    else:
+        prob_labeled = probabilities[i][1]
+        weight = ((1 - estimator) * prob_labeled)/ (estimator * (1 - prob_labeled))
+        new_data.append(points[i][0])
+        new_labels.append(1)
+        weights.append(weight)
+        
+        new_data.append(points[i][0])
+        new_labels.append(0)
+        weights.append(1 - weight)
+
+#Train on new data        
+new_classifier = linear_model.LogisticRegression()
+new_classifier.fit(new_data, new_labels, weights)
+
+
+
+
+
+draw_picture(points)
 
 
 
