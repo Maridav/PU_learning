@@ -39,16 +39,16 @@ def sample_point(centers, cov):
     i = np.random.randint(len(centers))
     return np.random.multivariate_normal(centers[i], cov)
 
-def create_set_gauss(var = 0.2, num_of_centers = 20, prob_of_labeled = 0.3):
+def create_set_gauss(var = 0.1, num_of_centers = 20, prob_of_labeled = 0.3):
     """
     Returns 2-D array of points and their labels. Points are sampled from 
     'num_of_centers' gaussians with covariance matrix 'var' * np.identity(1)
     prob_of labeled -- int, probability that point is labeled provided that 
     it is positive
     """
-    mean0 = np.random.multivariate_normal([-1, -1], 0.1 * np.identity(2), 
+    mean0 = np.random.multivariate_normal([-1, -1], 0.5 * np.identity(2), 
                                           size = num_of_centers // 2)
-    mean1 = np.random.multivariate_normal([1, 1], 0.1 * np.identity(2), 
+    mean1 = np.random.multivariate_normal([1, 1], 0.5 * np.identity(2), 
                                           size = num_of_centers // 2)
 
     sample_points0 = np.array([sample_point(mean0, var * np.identity(2)) for _ in range(100)])
