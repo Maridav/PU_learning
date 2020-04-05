@@ -87,10 +87,11 @@ def draw_picture(points, estimator):
     min_y, max_y = min(unlab_y + lab_y), max(unlab_y + lab_y)
     
     #Draw  sample points
-    plt.plot(unlab_x, unlab_y, 'o')
-    plt.plot(lab_x, lab_y, 'o')
+    plt.plot(unlab_x, unlab_y, 'o', label = 'unlabeled')
+    plt.plot(lab_x, lab_y, 'o', label = 'labeled')
     plt.xlim(min_x, max_x)
     plt.ylim(min_y, max_y)
+    plt.legend()
         
     
     #Draw separating line

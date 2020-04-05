@@ -14,6 +14,26 @@ from sklearn import  linear_model
 from scipy import stats
 
 
+def new_predict_proba(samples):
+    """
+    Arg: 
+     samples -- 1-D array of samples
+     
+    Returns: 
+     2-D array of probabilities of belonging to 2 classes in PU-model
+    """
+    return new_classifier.predict_proba(samples)
+
+def new_predict(samples):
+    """
+    Arg: 
+     samples -- 1-D array of  samples
+     
+    Returns: 
+     1-D array -- number of predicted group in PU-model
+    """
+    return new_classifier.predict(samples)
+
 
 def sample_point(centers, cov):
     i = np.random.randint(len(centers))
@@ -61,10 +81,11 @@ def draw_picture(points):
     min_y, max_y = min(unlab_y + lab_y), max(unlab_y + lab_y)
     
     #Draw  sample points
-    plt.plot(unlab_x, unlab_y, 'o')
-    plt.plot(lab_x, lab_y, 'o')
+    plt.plot(unlab_x, unlab_y, 'o', label = 'unlabeled')
+    plt.plot(lab_x, lab_y, 'o', label = 'labeled')
     plt.xlim(min_x, max_x)
     plt.ylim(min_y, max_y)
+    plt.legend()
         
     
     #Draw separating line
@@ -73,11 +94,10 @@ def draw_picture(points):
     pos[:, :, 0] = x
     pos[:, :, 1] = y
     pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
-    pred_lin = new_classifier.predict_proba(pos_lin)[:,1]
+    pred_lin = new_predict_proba(pos_lin)[:,1]
     pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
     plt.contour(x, y, pred, levels=[0.5])
     
-
   
 #Create sample set of labeled and unlabeled points 
 points = create_set_gauss()        

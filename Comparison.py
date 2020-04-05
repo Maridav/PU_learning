@@ -14,36 +14,54 @@ from sklearn import  linear_model
 from scipy import stats
 
 
-"""
-
-Positive-Unlabeled Learning Using a Traditional Classifier from Nontraditional Input
-
-"""
    
-def new_predict_proba(samples, estimator):
+def new_predict_proba_t(samples, estimator):
     """
     Arg: 
      samples -- 1-D array of samples
      
     Returns: 
-     2-D array of probabilities of belonging to 2 classes in PU-model
+     2-D array of probabilities of belonging to 2 classes in PU-model 
+     using traditional classifier with non-traditional input
     """
     t = traditional_classifier.predict_proba(samples)
     return np.array([(1 - t[i][1] / estimator, t[i][1] / estimator) for 
                      i in range(len(samples)) ])
     
     
-def new_predict(samples, estimator):
+def new_predict_t(samples, estimator):
+    """
+    Arg: 
+     samples -- 1-D array of  samples
+     
+    Returns: 
+     1-D array -- number of predicted group in PU-model 
+     using traditional classifier with non-traditional input
+    """
+    pr = new_predict_proba_t(samples, estimator)
+    return np.array([0 if pr[i][0] > 0.5 else 1 for i in range(len(samples))])
+    
+def new_predict_proba_w(samples):
+    """
+    Arg: 
+     samples -- 1-D array of samples
+     
+    Returns: 
+     2-D array of probabilities of belonging to 2 classes in PU-model
+     using weighted unlabeled examples
+    """
+    return new_classifier.predict_proba(samples)
+
+def new_predict_w(samples):
     """
     Arg: 
      samples -- 1-D array of  samples
      
     Returns: 
      1-D array -- number of predicted group in PU-model
+     using weighted unlabeled examples
     """
-    pr = new_predict_proba(samples, estimator)
-    return np.array([0 if pr[i][0] > 0.5 else 1 for i in range(len(samples))])
-    
+    return new_classifier.predict(samples)
 
 
 def sample_point(centers, cov):
@@ -92,10 +110,11 @@ def draw_picture_t(points, estimator):
     min_y, max_y = min(unlab_y + lab_y), max(unlab_y + lab_y)
     
     #Draw  sample points
-    plt.plot(unlab_x, unlab_y, 'o')
-    plt.plot(lab_x, lab_y, 'o')
+    plt.plot(unlab_x, unlab_y, 'o', label = 'unlabeled')
+    plt.plot(lab_x, lab_y, 'o', label = 'labeled')
     plt.xlim(min_x, max_x)
     plt.ylim(min_y, max_y)
+    plt.legend()
         
     
     #Draw separating line
@@ -104,35 +123,12 @@ def draw_picture_t(points, estimator):
     pos[:, :, 0] = x
     pos[:, :, 1] = y
     pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
-    pred_lin = new_predict_proba(pos_lin, estimator)[:,1]
+    pred_lin = new_predict_proba_t(pos_lin, estimator)[:,1]
     pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
     u = plt.contour(x, y, pred, levels=[0.5])
     plt.clabel(u, [0.5], inline=True, fmt = 'trad', fontsize=10)
 
 
-  
-#Create sample set of labeled and unlabeled points 
-points = create_set_gauss()
-data = [points[i][0] for i in range(len(points))]
-labels =[points[i][1] for i in range(len(points))]
-
-#Train traditional logistic regression model
-traditional_classifier = linear_model.LogisticRegression()
-traditional_classifier.fit(data, labels)
-
-#Estimate probability that point is labeled provided that it is positive
-t = traditional_classifier.predict_proba(labeled(points))
-estimator = sum([t[i][1] for i in range(len(labeled(points)))]) / len(labeled(points))
-
-draw_picture_t(points, estimator)
-
-
-
-"""
-
-Positive-Unlabeled Learning Using Weighted Unlabeled Examples
-
-"""
 
 
 def draw_picture_w(points):
@@ -140,7 +136,7 @@ def draw_picture_w(points):
     Arg: 
      points -- 2-D array of points and their labels
      
-    Draws picture of data and separating hyperplane
+    Draws picture of data and separating hyperplane in 
     """
 
     
@@ -157,12 +153,41 @@ def draw_picture_w(points):
     pos[:, :, 0] = x
     pos[:, :, 1] = y
     pos_lin = pos.reshape(pos.shape[0] * pos.shape[1], 2)
-    pred_lin = new_classifier.predict_proba(pos_lin)[:,1]
+    pred_lin = new_predict_proba_w(pos_lin)[:,1]
     pred = pred_lin.reshape(pos.shape[0], pos.shape[1])
     w = plt.contour(x, y, pred, levels=[0.5])
     plt.clabel(w, [0.5], inline=True, fmt = 'weigh', fontsize=10)
 
+ 
   
+#Create sample set of labeled and unlabeled points 
+points = create_set_gauss()
+data = [points[i][0] for i in range(len(points))]
+labels =[points[i][1] for i in range(len(points))]
+
+
+"""
+
+Positive-Unlabeled Learning Using a Traditional Classifier from Nontraditional Input
+
+"""
+
+#Train traditional logistic regression model
+traditional_classifier = linear_model.LogisticRegression()
+traditional_classifier.fit(data, labels)
+
+#Estimate probability that point is labeled provided that it is positive
+t = traditional_classifier.predict_proba(labeled(points))
+estimator = sum([t[i][1] for i in range(len(labeled(points)))]) / len(labeled(points))
+
+draw_picture_t(points, estimator)
+
+"""
+
+Positive-Unlabeled Learning Using Weighted Unlabeled Examples
+
+"""
+
 #Create weighted data
 new_data = []
 new_labels = []
