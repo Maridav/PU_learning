@@ -1,5 +1,5 @@
 # PU_learning
- This is repository for JetBrains Internship test about Positive-Unlabeled Learning
+ This is repository for implementation of Positive-Unlabeled Learning algorithm. The two variations of this algorithm were described in paper ElkanKDD08.pdf in 2 and 3 paragraph.
  
  * 1Using_traditional_classifier.py -- Python 3 file with implementation of PU-model using traditional classifier on non-traditional input. Its output is an illustration of the method on data sampled from gaussians.
  
